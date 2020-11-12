@@ -110,8 +110,6 @@ submit_term = browser.find_element_by_xpath('//input[@value="Submit"]')
 submit_term.click()
 rows = [] #list of every class' row info
 
-print("AWEFAWEFAWEF")
-
 print(args.major)
 subjects = sorted(args.major,reverse=True)
 print(subjects)
@@ -202,13 +200,3 @@ for i in range(len(colors)):
         ))
     fig.update_layout(title=colors[i])
     fig.show()
-
-
-
-
-
-
-
-
-
-
