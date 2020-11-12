@@ -13,6 +13,7 @@ import math
 import plotly.graph_objects as go
 import matplotlib
 
+
 def timedayparse(time,day):
     t = time.split("-")
     start, end =t[0],t[1]
@@ -108,6 +109,8 @@ select_term.click()
 submit_term = browser.find_element_by_xpath('//input[@value="Submit"]')
 submit_term.click()
 rows = [] #list of every class' row info
+
+print("AWEFAWEFAWEF")
 
 print(args.major)
 subjects = sorted(args.major,reverse=True)
