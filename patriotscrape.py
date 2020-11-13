@@ -12,6 +12,7 @@ from datetime import datetime
 import math
 import plotly.graph_objects as go
 import matplotlib
+import toml
 
 
 def timedayparse(time,day):
@@ -48,18 +49,35 @@ def timedayparse(time,day):
         else:
             Z[i+blocks_from_start][days.index(day)] += 1                
 
+# {'username': 'username', 'password': 'password', 'year': 2020, 'semester': 'Fall', 'majors': 'CS,CYSE', 'outfile': ''}
+def get_arguments(path):
+    try:
+        config = toml.load(path)
+    except Exception as e:
+        print(f"[!] Verify the path to toml file")
+    
+    username = config['username']
+    password = config['password']
+    year     = config['year']
+    semester = config['semester']
+    if ',' in config['majors']:
+        majors = config['majors'].split(',')
+    else:
+        majors = [config['majors']]
+    outfile  = config['outfile']
+
+    return (username,password,year,semester,majors,outfile)
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument("username",help="PatriotWeb user",type=str)
-parser.add_argument("password",help="PatriotWeb pass",type=str)
-parser.add_argument("-m", '--major',help="list of major(s) codes (e.g. CS CYSE IT). https://catalog.gmu.edu/courses/",nargs="*",type=str,required=True)
-parser.add_argument("-y","--year",help="Catalog year",type=str,required=True)
-parser.add_argument("-s","--semester",help="Fall/Spring/Summer",type=str,required=True)
-parser.add_argument("-o","--output",help="outfile of classdata",default="classdata.txt",type=str)
+parser.add_argument("path",help="toml config file",type=str)
+
 
 args = parser.parse_args()
 
-browser = webdriver.Chrome("/home/nulltop/Downloads/chromedriver")
+username,password,year,season,majors,outfile = get_arguments(args.path)
+
+browser = webdriver.Chrome(executable_path="/home/rusty/opt/chromedriver")
 
 browser.get("https://patriotweb.gmu.edu/")
 time.sleep(5)
@@ -67,13 +85,14 @@ button = browser.find_element_by_xpath("/html/body/table[2]/tbody/tr[2]/td[1]/ta
 button.click()
 
 #submit user:pass and login
-username=args.username
-user_field = browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div/form/section[1]/div/input")
+
+user_field = browser.find_element_by_xpath('//*[@id="username"]')
 user_field.send_keys(username)
-password=args.password
-pass_field = browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div/form/section[2]/div/input")
+
+pass_field = browser.find_element_by_xpath('//*[@id="password"]')
 pass_field.send_keys(password)
-login = browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div/form/section[5]/input[4]")
+# was: "/html/body/div[1]/div/div/div[2]/div/form/section[5]/input[4]"
+login = browser.find_element_by_xpath("/html/body/div/div/div/div[2]/form/div[5]/button")
 login.click()
 time.sleep(2)
 if "invalid credentials" in browser.page_source:
@@ -90,13 +109,13 @@ class_search = browser.find_element_by_partial_link_text('Search for Classes')
 class_search.click()
 #drop down "Search by Term"
 #search page source to find the option@value for the user-specified year and semester
-season = args.semester
-year = args.year
+
 optionvalue = 0
 src = browser.page_source.split("\n")
 for line in src:
     if season.lower() in line.lower():
-        if year in line:
+        print(line.lower())
+        if str(year) in line:
             optionvalue = (re.findall(r'\"(.+?)\"',line))[0]
             print("value = " + optionvalue)
 try:
@@ -110,9 +129,9 @@ submit_term = browser.find_element_by_xpath('//input[@value="Submit"]')
 submit_term.click()
 rows = [] #list of every class' row info
 
-print(args.major)
-subjects = sorted(args.major,reverse=True)
-print(subjects)
+#expecting list of majors
+subjects = sorted(majors,reverse=True)
+
 #go through every class of every major the user asked for in the -m flag
 for sub in subjects:
     print("SUB:" + sub)
@@ -149,7 +168,7 @@ for sub in subjects:
         browser.back()
     browser.back()
 
-f = open(args.output,"w")
+f = open(outfile,"w")
 for n in rows:
         x = n.split("$")
         print(x[1:3]+x[6:9])
@@ -176,7 +195,7 @@ Z=[[0, 0, 0, 0, 0],[0, 0, 0, 0, 0],[0, 0, 0, 0, 0],[0, 0, 0, 0, 0],[0, 0, 0, 0, 
   ]
 
 #populate the Z array
-f = open(args.output)
+f = open(outfile)
 for rows in f:
     ele = rows.split(",")
     pretime = ele[-1]

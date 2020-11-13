@@ -1,0 +1,8 @@
+username = "username"
+password = "password"
+year = 2020
+semester = "Fall"
+# Write multiple major codes in comma-delimited string (https://catalog.gmu.edu/courses/)
+majors = "CYSE"
+outfile = "outfile.log"
+
